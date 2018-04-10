@@ -58,4 +58,159 @@ nrow(train[which(Cabin == "Cabin" & Survived == 1)]) / nrow(train[which(Cabin ==
 # data itself, I'm not going to try to impute the missing data in any special fashion 
 # in my basic analysis. This might be an area forimproving them model if I get poor
 # results after a few iterations. Next, I'll work on some more EDA for the other 
-# variables. 
+# variables. Let's start with Fare EDA
+
+# Density plot
+ggplot(train, aes(x = Fare)) +
+  geom_density()
+
+# Density plot by Pclass
+ggplot(train, aes(x = Fare)) + 
+  geom_density() +
+  facet_wrap(~Pclass)
+
+# Density plot where the color is mapped to the Survived variable 
+ggplot(train, aes(x = Fare, color = Survived)) +
+  geom_density()
+  
+# Similar plot as above, except breaking the training set into three data.tables
+# based on Pclass
+p.class1 <- train[Pclass == "1"]
+p.class2 <- train[Pclass == "2"]
+p.class3 <- train[Pclass == "3"]
+
+# Density plot where the color is mapped to the Survived variable for p.class1
+ggplot(p.class1, aes(x = Fare, color = Survived)) +
+  geom_density()
+
+# Density plot where the color is mapped to the Survived variable for p.class2
+ggplot(p.class2, aes(x = Fare, color = Survived)) +
+  geom_density()
+
+# Density plot where the color is mapped to the Survived variable for p.class3
+ggplot(p.class3, aes(x = Fare, color = Survived)) +
+  geom_density()
+
+# From these three plots it looks like there was a slight bias against people 
+# who paid less in Fare, especially in Class 1 and 3
+
+# Jittered scatterplot of Survived vs Fare.
+ggplot(train, aes(x = Fare, y = Survived, color = Survived)) +
+  geom_point(position = "jitter", alpha = .5)  
+
+# Calculate the median of Fare based on response classes
+surv.median <- median(train[Survived == "1"][, Fare])
+no.surv.median <- median(train[Survived == "0"][, Fare])
+
+# Same chart as above with both median lines plotted with different x limits 
+# to help visualize the bulk of the data. 
+ggplot(train, aes(x = Fare, y = Survived, color = Survived)) +
+  geom_point(position = "jitter", alpha = .5) +
+  geom_vline(xintercept = surv.median) +
+  geom_vline(xintercept = no.surv.median, color = "blue") +
+  xlim(c(0, 150))
+  
+# This plot revists the density plot of each Survived classes vs Fare, except 
+# this plot has the no.surv.median vertical line plotted
+ggplot(train, aes(x = Fare, color = Survived)) +
+  geom_density() +
+  geom_vline(xintercept = no.surv.median) +
+  xlim(c(0, 150))
+
+# Both of these plots definitely show a bias against low Fares. In essence, more of
+# the data is located in the lower range of Fare values for passengers that didn't
+# survive. Let's recreate both of these with the 3rd quantile to get another look 
+# at this phenomenon
+
+surv.third <- quantile(train[Survived == "1"][, Fare])[4]
+no.surv.third <- quantile(train[Survived == "0"][, Fare])[4]
+
+
+# This plot revists the density plot of each Survived classes vs Fare, except 
+# this plot has the no.surv.median vertical line plotted
+ggplot(train, aes(x = Fare, color = Survived)) +
+  geom_density() +
+  geom_vline(xintercept = no.surv.third, color = "blue") +
+  geom_vline(xintercept = surv.third) +
+  xlim(c(0, 150))
+
+# Now let's look at the Sex variable
+ggplot(train, aes(x = Sex)) +
+  geom_bar() +
+  facet_wrap(~Survived)
+  
+# From this we can see many many more men died than women and almost twice 
+# as many women survived as men. This will definitely be an important predictor
+# in our model.
+
+# Next let's look at age. I'll start with some simple density plots
+ggplot(train, aes(x = Age)) +
+  geom_density()
+
+# Next I'll overlay two densities based on response classes
+ggplot(train, aes(x = Age, color = Survived)) +
+  geom_density()
+
+# Here there isn't as much of a different like we saw in the Fare density plots. 
+# However, there is a lot of data missing for the Age values. I'm going to try 
+# to impute some of these values and see what it does.
+ages <- train[, Age]
+mean.ages <- mean(ages, na.rm = TRUE)
+median.ages <- median(ages, na.rm = TRUE)
+
+# Make age.median and age.mean column
+train[, age.median := Age]
+train[, age.mean := Age]
+
+# Set NA values in these columns to respective statistic
+train[is.na(age.mean), age.mean := mean.ages]
+train[is.na(age.median), age.median := median.ages]
+
+# Now let's recreate the visualization and see what we come up with
+# Next I'll overlay two densities based on response classes
+ggplot(train, aes(x = age.mean, color = Survived)) +
+  geom_density()
+
+# Next I'll overlay two densities based on response classes
+ggplot(train, aes(x = age.median, color = Survived)) +
+  geom_density()
+
+# Based on this there really isn't much of a difference in the between the two 
+# resposnes based on Age. I'll still include it in my models, because it may 
+# interact with some of the other variables differently and end up being significant. 
+# I'll also do one more quick visualization where I facet by gender and see how
+# this plot differs
+ggplot(train, aes(x = age.median, color = Survived)) +
+  geom_density() +
+  facet_wrap(~Sex)
+
+# Now I'll look at a jittered scatterplot like I did with the Fare variable
+ggplot(train, aes(x = Age, y = Survived, color = Survived)) +
+  geom_point(position = "jitter")
+
+# Next I'll look at the relationship between SibSp and Survived
+ggplot(train, aes(x = SibSp, fill = Survived)) +
+  geom_bar(position = "fill") 
+
+# I'll create the same plot with Parch
+ggplot(train, aes(x = Parch, fill = Survived)) +
+  geom_bar(position = "fill") 
+
+# Density plots of Age with two overlayed densities for each response class, faceted
+# by the SibSp variable
+ggplot(train, aes(x = age.mean, color = Survived)) +
+  geom_density() +
+  facet_wrap(~SibSp)
+
+# Finally I'll look at Pclass 
+ggplot(train, aes(x = Pclass, fill = Survived)) +
+  geom_bar(position = "fill")
+
+
+
+
+# Bar chart of SibSp based on Pclass
+ggplot(train, aes(x = Pclass)) 
+
+
+
