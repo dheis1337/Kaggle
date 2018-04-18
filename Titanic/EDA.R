@@ -1,11 +1,8 @@
 library(data.table)
 library(ggplot2)
-library(ISLR)
-library(MASS)
 
-# This script is dedicated to modeling the Titanic dataset using logistic regression. 
-# In this script, I will clean the data up a little, as well as conduct some 
-# exploratory analysis before modeling the data. 
+
+# This script is dedicated to conducting some EDA on the Titanic dataset on Kaggle. . 
 
 # Set directory
 setwd("C:/MyStuff/DataScience/Projects/Kaggle/Titanic/")
@@ -47,10 +44,8 @@ ggplot(train, aes(x= Cabin, fill = Survived)) +
   geom_bar(position = "fill")  
 
 # From the visualization it looks like there is a firm difference between the Survived
-# variable based on whether or not the passenger had a Cabin. Let's look at the difference
-# in proprortions
-nrow(train[which(Cabin == "Cabin" & Survived == 1)]) / nrow(train[which(Cabin == "Cabin")]) -
-  nrow(train[which(Cabin == "No Cabin" & Survived == 1)]) / nrow(train[which(Cabin == "No Cabin")]) 
+# variable based on whether or not the passenger had a Cabin. 
+nrow(train[which(Cabin == "Cabin" & Survived == 1)]) / nrow(train[which(Cabin == "Cabin")]) 
   
 # It looks like there is about a 36% difference between the passengers with Cabin values
 # and those with No Cabin values. This does make me think the Cabin variable will 
@@ -68,6 +63,10 @@ ggplot(train, aes(x = Fare)) +
 ggplot(train, aes(x = Fare)) + 
   geom_density() +
   facet_wrap(~Pclass)
+
+# Density plot of Fare for each Pclass
+ggplot(train, aes(x = Fare, color = Pclass)) +
+  geom_density()
 
 # Density plot where the color is mapped to the Survived variable 
 ggplot(train, aes(x = Fare, color = Survived)) +
@@ -98,6 +97,11 @@ ggplot(p.class3, aes(x = Fare, color = Survived)) +
 ggplot(train, aes(x = Fare, y = Survived, color = Survived)) +
   geom_point(position = "jitter", alpha = .5)  
 
+# Jittered scatterplot of Sruvived by Fare faceted by Pclass
+ggplot(train, aes(x = Fare, y = Survived, color = Survived)) +
+  geom_point(position = "jitter", alpha = .5) +
+  facet_wrap(~Pclass)
+  
 # Calculate the median of Fare based on response classes
 surv.median <- median(train[Survived == "1"][, Fare])
 no.surv.median <- median(train[Survived == "0"][, Fare])
@@ -202,15 +206,48 @@ ggplot(train, aes(x = age.mean, color = Survived)) +
   geom_density() +
   facet_wrap(~SibSp)
 
-# Finally I'll look at Pclass 
+# Next I'll look at Pclass 
 ggplot(train, aes(x = Pclass, fill = Survived)) +
   geom_bar(position = "fill")
 
+# Finally, I'll look at Embarked. This I don't imagine to find too much information
+# with, but it's worth a shot
+ggplot(train, aes(x = Embarked, fill = Survived)) +
+  geom_bar(position = "fill")
+
+# Really nothing interesting there. 
+
+# Now I want to do some basic numerical EDA. Specifically, doing number summaries
+# and proportions of some of the variables based on the Survived status
+surv.train <- train[Survived == "1"]
+no.surv.train <- train[Survived == "0"]
+
+# 5 number summary for Fare
+summary(surv.train[, Fare])
+summary(no.surv.train[, Fare])
+
+# 5 number summary for Age
+summary(surv.train[, Age])
+summary(no.surv.train[, Age])
+
+# Correlation between Age and Fare for each
+cor(surv.train[, .(age.mean, Fare)])
+cor(surv.train[, .(age.median, Fare)])
+cor(no.surv.train[, .(age.mean, Fare)])
+cor(no.surv.train[, .(age.median, Fare)])
+
+
+# There is almost 3 times as much correlation between the two in the survivor set 
+# then in the non-survivor set. Not sure what this means exactly, so I'll have 
+# to think about that for a little. 
 
 
 
-# Bar chart of SibSp based on Pclass
-ggplot(train, aes(x = Pclass)) 
-
-
-
+# This is the end of the EDA for this dataset. I learned that the Fare and Pclass
+# variables are important (these are probably pretty correlated, so that makes sense
+# I'm getting the same signal from both). I also learned that the Cabin status
+# of individuals was important. I will include the age.median, and age.mean imputations
+# in my analysis just to see how that affects things. Additionally, since this
+# dataset is so small, I think it makes sense to just give all the variables a 
+# shot and see what happens (except for Embarked). I'll conduct the modeling in 
+# a separate script for each type of model. 
