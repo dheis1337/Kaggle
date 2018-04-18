@@ -36,6 +36,19 @@ train[, age.mean := Age]
 train[is.na(age.mean), age.mean := mean.ages]
 train[is.na(age.median), age.median := median.ages]
 
+# Next I need to impute the one missing Fare value
+fares <- train[, Fare]
+mean.fares <- mean(fares, na.rm = TRUE)
+median.fares <- median(fares, na.rm = TRUE)
+
+# Make an age.mean and age.median column
+train[, fare.mean := Fare]
+train[, fare.median := Fare]
+
+# Set the one NA value in these columns to their respective imputed values
+train[is.na(fare.mean), fare.mean := mean.fares]
+train[is.na(fare.median), fare.median := median.fares]
+
 
 # Next I will impute the missing Cabin values, and I will say anyone who is missing
 # a Cabin didn't have a Cabin. This is a huge topic of debate in this dataset, 
