@@ -105,3 +105,13 @@ test[which(grepl(".", Cabin)), Cabin := "Cabin"]
 test[-which(grepl(".", Cabin)), Cabin := "No Cabin"]
 
 
+# Let's create two new columns that will use the turn the 
+# Parch variable into a binary variable
+train[, Parch_bin := ifelse(as.numeric(Parch) > 0, 1, 0)]
+test[, Parch_bin := ifelse(as.numeric(Parch) > 0, 1, 0)]
+
+
+# Let's create a new predictor which makes the Pclass predictor binary based on 
+# being in Pclass 1 or not
+train[, Pclass_bin := ifelse(as.numeric(Pclass == 1), 1, 0)]
+test[, Pclass_bin := ifelse(as.numeric(Pclass == 1), 1, 0)]
