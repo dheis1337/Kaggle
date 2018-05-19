@@ -204,22 +204,39 @@ class.weights <- class.weights / 891
 
 # Radial SVM gamma = .1, cost = 1 and class weights
 svm.radial <- svm(Survived ~ Pclass + Sex + Cabin + fare.median + age.median +
-                    Parch + SibSp,
+                    Parch + SibSp + fare_age,
                   data = dat, kernel = "radial", cost = 1, gamma = .1, 
                   class.weights = class.weights) 
 
 # Create predictions
-preds.radial <- predict(svm.radial, newdata = sub)
+preds.radial <- predict(svm.radial, newdata = sub[, .(Pclass, Sex, Cabin, fare_log, age.median, Parch, SibSp, fare_age, fare.median)])
 
 subm <- data.table("PassengerId" = sub[, PassengerId],
                    "Survived" = as.integer(as.character(preds.radial)))
 
+
+fwrite(x = subm, "svm_radial.csv")
+
 # Now let's do the same to find an optimal gamma and cost 
-svm.radial <- svm.radial <-tune(svm, Survived ~ Pclass + Sex + Cabin + fare.median + age.median +
-                                  Parch + SibSp, class.weights = class.weights,
-                                data = dat, kernel = "radial",
+svm.radial  <- tune(svm, Survived ~ Pclass + Sex + Cabin + fare_log + age.median + 
+                                  Parch + SibSp + fare_age, class.weights = class.weights,
+                                data = dat[, .(Survived, Pclass, Sex, Cabin, fare_log, age.median, 
+                                               Parch, SibSp, fare_age, fare.median)], kernel = "radial",
                                 ranges = list(gamma = c(.0001, .001, .01, .1, 1, 10, 100, 1000),
                                               cost = c(.0001, .001, .01, .1, 1, 10, 100, 1000)))
 
 
-                    
+# Radial SVM gamma = .01, cost = 100 and class weights
+svm.radial <- svm(Survived ~ Pclass + Sex + Cabin + fare.median + age.median +
+                    Parch + SibSp + fare_age,
+                  data = dat, kernel = "radial", cost = 100, gamma = .01, 
+                  class.weights = class.weights) 
+
+# Create predictions
+preds.radial <- predict(svm.radial, newdata = sub[, .(Pclass, Sex, Cabin, fare_log, age.median, Parch, SibSp, fare_age, fare.median)])
+
+subm <- data.table("PassengerId" = sub[, PassengerId],
+                   "Survived" = as.integer(as.character(preds.radial)))
+
+
+fwrite(x = subm, "svm_radial.csv")
