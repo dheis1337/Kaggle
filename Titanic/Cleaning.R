@@ -1,4 +1,6 @@
 library(data.table)
+library(MASS)
+
 
 # This script will be used as the basic cleaning script for all my analyses 
 # on the Titanic dataset. 
@@ -36,6 +38,9 @@ dat[, age.mean := Age]
 dat[is.na(age.mean), age.mean := mean.ages]
 dat[is.na(age.median), age.median := median.ages]
 
+# Make the observations with Fare 0 have a Fare of 1 for log transformation
+set(dat, which(dat$Fare == 0), "Fare", 1)
+
 # Next I need to impute the one missing Fare value
 fares <- dat[, Fare]
 mean.fares <- mean(fares, na.rm = TRUE)
@@ -58,6 +63,17 @@ dat[which(grepl(".", Cabin)), Cabin := "Cabin"]
 dat[-which(grepl(".", Cabin)), Cabin := "No Cabin"]
 
 dat[, Cabin := factor(Cabin)]
+
+# log transform the Fare variable
+dat[, fare_log := log(Fare)]
+dat[, fare_log_10 := log(Fare, base = 10)]
+
+# Create interaction terms
+# log(Fare) and age
+dat[, fare_age := fare_log * age.median]
+
+#
+
 
 #################### Clean the sub dataset ####################################
 
@@ -85,10 +101,17 @@ sub[, age.mean := Age]
 sub[is.na(age.mean), age.mean := mean.ages]
 sub[is.na(age.median), age.median := median.ages]
 
+# Make the observations with Fare 0 have a Fare of 1 for log transformation
+set(sub, which(dat$Fare == 0), "Fare", 1)
+
+
 # Next I need to impute the one missing Fare value
 fares <- sub[, Fare]
 mean.fares <- mean(fares, na.rm = TRUE)
 median.fares <- median(fares, na.rm = TRUE)
+
+
+
 
 # Make an age.mean and age.median column
 sub[, fare.mean := Fare]
@@ -108,6 +131,14 @@ sub[-which(grepl(".", Cabin)), Cabin := "No Cabin"]
 sub[, Cabin := factor(Cabin)]
 
 
+# log transform the Fare variable
+sub[, fare_log := log(Fare)]
+sub[, fare_log_10 := log(Fare, base = 10)]
+
+# Create interaction terms
+# log(Fare) and age
+sub[, fare_age := fare_log * age.median]
+
 
 # Let's create two new columns that will use the turn the 
 # Parch variable into a binary variable
@@ -119,3 +150,5 @@ sub[, Parch_bin := ifelse(as.numeric(Parch) > 0, 1, 0)]
 # being in Pclass 1 or not
 dat[, Pclass_bin := ifelse(as.numeric(Pclass == 1), 1, 0)]
 sub[, Pclass_bin := ifelse(as.numeric(Pclass == 1), 1, 0)]
+
+
